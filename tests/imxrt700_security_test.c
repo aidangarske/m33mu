@@ -20,15 +20,16 @@
  */
 
 /* i.MX RT700 model: register-file SET/CLR semantics, GLIKEY write-enable
- * FSM, AHBSC SRAM rules as MPCBB attribution, the CPU1 release sequence,
- * MU1 messaging, the boot ROM image-header handling and the XSPI0 flash
- * controller (IP program/erase through the LUT, FRAD protection). */
+ * FSM, the AHBSC SRAM rule decode (kept out of CPU0 attribution), the CPU1
+ * release sequence, MU1 messaging, the boot ROM image-header handling and the
+ * XSPI0 flash controller (IP program/erase through the LUT, FRAD protection). */
 
 #include <stdio.h>
 #include <string.h>
 #include "m33mu/mmio.h"
 #include "m33mu/memmap.h"
 #include "m33mu/cpu.h"
+#include "m33mu/cpu_db.h"
 #include "m33mu/nvic.h"
 #include "m33mu/target.h"
 #include "imxrt700/cpu_config.h"
@@ -160,11 +161,18 @@ static void test_ahbsc(void)
 {
     /* 0x20408000 is SRAM partition 14 sub-region 2 (SRAM_14_RULE0 bits 9:8). */
     mm_u32 block = 0x408000u / IMXRT700_MPCBB_BLOCK_SIZE;
+    struct mm_target_cfg rt700;
+
+    /* The rules are decoded but not applied to CPU0 attribution, matching
+     * the part; the decode below is the rule register model. */
+    memset(&rt700, 0, sizeof(rt700));
+    CHECK(mm_cpu_lookup("imxrt700", &rt700));
+    CHECK(rt700.mpcbb_block_secure == 0);
     CHECK(!mm_imxrt700_mpcbb_block_secure(0, block));
     wr(S(AHBSC0) + 0x250u, 3u << 8);
     CHECK(mm_imxrt700_mpcbb_block_secure(0, block));
     CHECK(!mm_imxrt700_mpcbb_block_secure(0, block - 1u));
-    /* Only CPU0 is governed by AHBSC0 in this model. */
+    /* The decode models only the compute domain's rules. */
     mm_imxrt700_secure_set_active_core(1u);
     CHECK(!mm_imxrt700_mpcbb_block_secure(0, block));
     mm_imxrt700_secure_set_active_core(0u);
@@ -182,6 +190,7 @@ static void test_ahbsc(void)
     wr(S(AHBSC0) + 0xFFCu, 0x86AAu);
     CHECK(rd(S(AHBSC0) + 0xFFCu) == 0x8655u);
 }
+
 
 static void test_cpu1_release_and_mu(void)
 {

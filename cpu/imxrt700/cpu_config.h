@@ -75,7 +75,10 @@ static const struct mm_ram_region IMXRT700_RAM_REGIONS[] = {
 #define IMXRT700_USART_RESET    mm_imxrt700_periph_reset
 #define IMXRT700_USART_POLL     mm_imxrt700_periph_poll
 #define IMXRT700_TIMER_TICK     mm_imxrt700_tick
-#define IMXRT700_MPCBB_SECURE   mm_imxrt700_mpcbb_block_secure
+/* The AHBSC SRAM rules are not applied to CPU0: on the part they deny neither
+ * its Non-secure accesses through the NS alias nor NSC veneer fetches that the
+ * SAU allows. */
+#define IMXRT700_MPCBB_SECURE   0
 #define IMXRT700_MC_OPS         (&mm_imxrt700_mc_ops)
 #define IMXRT700_BOOT_RESOLVE   mm_imxrt700_boot_resolve
 

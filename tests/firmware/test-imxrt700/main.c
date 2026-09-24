@@ -486,19 +486,19 @@ static void test_ahbsc(void)
     AHBSC0_MISC_CTRL = 0x86AAu;
     check("ahbsc: MISC_CTRL write-protected", AHBSC0_MISC_CTRL == misc);
 
-    /* 0x20404000 (P14 sub-region 1) stays non-secure, 0x20408000 (sub-region
-     * 2) becomes secure through SRAM_14_RULE0. */
-    REG32(0x30404000u) = 0x0000AB5Eu;
+    /* As on the part, an SRAM rule denies no CPU0 access the SAU allows:
+     * 0x20408000 (P14 sub-region 2) made Secure through SRAM_14_RULE0 still
+     * reads from the non-secure side. The SAU isolates CPU0: 0x20420000 lies
+     * outside every SAU region, so the same read of it faults. */
     REG32(0x30408000u) = 0x5EC0DA7Au;
+    REG32(0x30420000u) = 0x0000AB5Eu;
     AHBSC0_SRAM_RULE(0x250u) = 3u << 8;
     fault_count = 0u;
-    v = call_ns(2u, 0x20404000u);
-    check("ahbsc: NS read of NS-ruled block", v == 0x0000AB5Eu && fault_count == 0u);
     v = call_ns(2u, 0x20408000u);
-    check("ahbsc: NS read of S-ruled block faults", v == FAULT_MARK && fault_count == 1u);
+    check("ahbsc: S rule does not gate CPU0", v == 0x5EC0DA7Au && fault_count == 0u);
     AHBSC0_SRAM_RULE(0x250u) = 0u;
-    v = call_ns(2u, 0x20408000u);
-    check("ahbsc: rule cleared", v == 0x5EC0DA7Au && fault_count == 1u);
+    v = call_ns(2u, 0x20420000u);
+    check("ahbsc: SAU-Secure NS read faults", v == FAULT_MARK && fault_count == 1u);
 }
 
 static void test_dual_core(void)

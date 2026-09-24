@@ -30,8 +30,8 @@
  *  - GLIKEY0..5: glitch-resistant write-enable FSM (SDK fsl_glikey sequence).
  *    GLIKEY4 index 1 gates SYSCON3 CPU1_SVTOR/NSVTOR; GLIKEY0 index 1 gates
  *    the AHBSC0 MISC_CTRL registers.
- *  - AHBSC0/3/4: MISC_CTRL write lock; the AHBSC0 SRAM memory rules feed the
- *    MPCBB hook while secure checking is enabled (CPU0 accesses).
+ *  - AHBSC0/3/4: MISC_CTRL write lock; the AHBSC0 SRAM memory rules are
+ *    decoded but, as on the part, deny no CPU0 access the SAU allows.
  *  - TRNG: register-level entropy model (MCTL/ENT[]), host RNG backed.
  *  - OCOTP: fuse array behind OTP_SHADOW[] and the READ_CTRL/WRITE_DATA path.
  *  - ELS, PKC, PUF: m33mu synthetic command interface (same contract as the
@@ -73,7 +73,7 @@ mm_bool mm_imxrt700_otp_program(mm_u32 index, mm_u32 value);
 /* MM_TRUE while GLIKEYn is in WR_EN state for the given write index. */
 mm_bool mm_imxrt700_glikey_write_enabled(mm_u32 glikey, mm_u32 index);
 
-/* MPCBB hook: AHBSC0 SRAM memory rules, 4 KB blocks of the 7.5 MB SRAM. */
+/* AHBSC0 SRAM memory rule decode, 4 KB blocks of the 7.5 MB SRAM. */
 mm_bool mm_imxrt700_mpcbb_block_secure(int bank, mm_u32 block_index);
 void mm_imxrt700_secure_set_active_core(mm_u32 core);
 

@@ -279,6 +279,9 @@ static mm_u32 sram_rule(mm_u32 part, mm_u32 sub)
     return (reg >> ((sub % 8u) * 4u)) & 3u;
 }
 
+/* Rule decode for the AHBSC0 SRAM partitions. It is not wired into CPU0
+ * attribution (IMXRT700_MPCBB_SECURE): on the part the rules deny no CPU0
+ * access the SAU allows, and the other AHB masters are not modelled. */
 mm_bool mm_imxrt700_mpcbb_block_secure(int bank, mm_u32 block_index)
 {
     mm_u32 misc;

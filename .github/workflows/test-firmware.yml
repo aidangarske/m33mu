@@ -148,8 +148,8 @@ jobs:
           done
       - name: Run i.MX RT700 firmware tests (dual Cortex-M33, TrustZone)
         # Booted like the ROM does: FCB + XIP image, and a load-to-RAM image.
-        # No --quit-on-faults: the AHBSC check provokes a non-secure fault on
-        # purpose and recovers from it.
+        # No --quit-on-faults: the AHBSC check provokes an SAU non-secure fault
+        # on purpose and recovers from it.
         run: |
           set -euo pipefail
           for t in app app-ramload; do

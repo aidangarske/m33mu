@@ -39,8 +39,10 @@ These values are accepted by `--cpu`:
   sequence: GLIKEY4 unlock, `SYSCON3 CPU1_SVTOR`, CPU1 clock and reset, then
   `SYSCON3 CPU_STATUS.CPU_WAIT` cleared. MU1 connects the cores with interrupts on both
   sides; each core's private timers raise interrupts on its own NVIC.
-- **Security.** SAU attribution plus the AHBSC0 SRAM memory rules (compute domain);
-  GLIKEY write-enable sequences gate the protected registers; TRNG, OCOTP fuses and the
+- **Security.** CPU0 is attributed by the SAU (the bit-28 IDAU is not modelled); the
+  AHBSC0 SRAM memory rules are modelled as registers but, as on the part, deny no CPU0
+  access the SAU allows. GLIKEY write-enable sequences gate the protected
+  registers; TRNG, OCOTP fuses and the
   ROM API OTP driver are modelled. ELS / PKC / PUF use m33mu's synthetic command
   interface (documented in `cpu/imxrt700/imxrt700_secure.h`) and need wolfSSL.
 - **Peripherals.** Every block of the CM33 SVDs is present as a register file with its
