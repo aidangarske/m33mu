@@ -24,6 +24,7 @@
 
 #include "m33mu/mmio.h"
 #include "m33mu/nvic.h"
+#include "m33mu/sau.h"
 
 struct mm_memmap;
 struct mm_flash_persist;
@@ -41,6 +42,10 @@ void mm_stm32l552_rng_set_nvic(struct mm_nvic *nvic);
 void mm_stm32l552_exti_set_nvic(struct mm_nvic *nvic);
 void mm_stm32l552_watchdog_tick(mm_u64 cycles);
 mm_bool mm_stm32l552_mpcbb_block_secure(int bank, mm_u32 block_index);
+mm_bool mm_stm32l552_tz_attr_for_addr(mm_u32 addr,
+                                      enum mm_sau_attr *attr_out,
+                                      mm_u32 *region_out);
+void mm_stm32l552_flash_set_secwm(int bank, mm_u32 strt, mm_u32 end);
 void mm_stm32l552_mmio_reset(void);
 
 #endif /* M33MU_STM32L552_MMIO_H */
