@@ -3827,14 +3827,15 @@ enum mm_exec_status mm_execute_decoded(struct mm_execute_ctx *ctx)
                                                 case 0x0b: val = (cpu.sec_state == MM_NONSECURE) ? cpu.psplim_ns : cpu.psplim_s; break; /* PSPLIM */
                                                 case 0x10: val = (cpu.sec_state == MM_NONSECURE) ? cpu.primask_ns : cpu.primask_s; break; /* PRIMASK */
                                                 case 0x11: val = (cpu.sec_state == MM_NONSECURE) ? cpu.basepri_ns : cpu.basepri_s; break; /* BASEPRI */
-                                                case 0x12: val = (cpu.sec_state == MM_NONSECURE) ? cpu.faultmask_ns : cpu.faultmask_s; break; /* FAULTMASK */
+                                                case 0x12: val = (cpu.sec_state == MM_NONSECURE) ? cpu.basepri_ns : cpu.basepri_s; break; /* BASEPRI_MAX */
+                                                case 0x13: val = (cpu.sec_state == MM_NONSECURE) ? cpu.faultmask_ns : cpu.faultmask_s; break; /* FAULTMASK */
                                                 case 0x88: val = cpu.msp_ns; break;
                                                 case 0x89: val = cpu.psp_ns; break;
                                                 case 0x8a: val = cpu.msplim_ns; break;
                                                 case 0x8b: val = cpu.psplim_ns; break;
                                                 case 0x90: val = cpu.primask_ns; break;
                                                 case 0x91: val = cpu.basepri_ns; break;
-                                                case 0x92: val = cpu.faultmask_ns; break;
+                                                case 0x93: val = cpu.faultmask_ns; break;
                                                 case 0x94: val = cpu.control_ns; break;
                                                 case 0x14: val = (cpu.sec_state == MM_NONSECURE) ? cpu.control_ns : cpu.control_s; break;
                                                 default: val = 0; break;
@@ -3964,7 +3965,14 @@ enum mm_exec_status mm_execute_decoded(struct mm_execute_ctx *ctx)
                                                     if (cpu.sec_state == MM_NONSECURE) cpu.basepri_ns = val & 0xffu;
                                                     else cpu.basepri_s = val & 0xffu;
                                                     break;
-                                                case 0x12: /* FAULTMASK */
+                                                case 0x12: /* BASEPRI_MAX */
+                                                    if (cpu.sec_state == MM_NONSECURE) {
+                                                        if ((val & 0xffu) != 0u && ((val & 0xffu) < cpu.basepri_ns || cpu.basepri_ns == 0u)) cpu.basepri_ns = val & 0xffu;
+                                                    } else {
+                                                        if ((val & 0xffu) != 0u && ((val & 0xffu) < cpu.basepri_s || cpu.basepri_s == 0u)) cpu.basepri_s = val & 0xffu;
+                                                    }
+                                                    break;
+                                                case 0x13: /* FAULTMASK */
                                                     if (cpu.sec_state == MM_NONSECURE) cpu.faultmask_ns = val & 1u;
                                                     else cpu.faultmask_s = val & 1u;
                                                     break;
@@ -3974,7 +3982,7 @@ enum mm_exec_status mm_execute_decoded(struct mm_execute_ctx *ctx)
                                                 case 0x91: /* BASEPRI_NS */
                                                     cpu.basepri_ns = val & 0xffu;
                                                     break;
-                                                case 0x92: /* FAULTMASK_NS */
+                                                case 0x93: /* FAULTMASK_NS */
                                                     cpu.faultmask_ns = val & 1u;
                                                     break;
                                                 case 0x14: /* CONTROL */

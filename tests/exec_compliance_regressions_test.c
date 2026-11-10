@@ -510,6 +510,65 @@ static int test_msr_splim_masks_low_bits(void)
     return 0;
 }
 
+static int test_msr_mrs_mask_sysm_encodings(void)
+{
+    struct mm_cpu cpu;
+    struct mm_memmap map;
+    struct mm_scs scs;
+    struct mm_decoded dec;
+    mm_u8 ram[32];
+
+    memset(&cpu, 0, sizeof(cpu));
+    memset(&scs, 0, sizeof(scs));
+    memset(ram, 0, sizeof(ram));
+    setup_ram_map(&map, ram, sizeof(ram));
+    cpu.sec_state = MM_SECURE;
+    cpu.mode = MM_THREAD;
+    cpu.r[15] = 1u;
+
+    memset(&dec, 0, sizeof(dec));
+    dec.kind = MM_OP_MSR;
+    dec.rm = 0u;
+
+    /* SYSm 0x13 is FAULTMASK and 0x93 is FAULTMASK_NS. */
+    cpu.r[0] = 1u;
+    dec.imm = 0x13u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.faultmask_s != 1u || cpu.basepri_s != 0u) return 1;
+    dec.imm = 0x93u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.faultmask_ns != 1u || cpu.basepri_ns != 0u) return 1;
+
+    /* SYSm 0x12 is BASEPRI_MAX: it only ever raises the masking level. */
+    cpu.r[0] = 0x80u;
+    dec.imm = 0x12u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.basepri_s != 0x80u) return 1;
+    cpu.r[0] = 0xA0u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.basepri_s != 0x80u) return 1;
+    cpu.r[0] = 0u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.basepri_s != 0x80u) return 1;
+    cpu.r[0] = 0x40u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.basepri_s != 0x40u || cpu.faultmask_s != 1u) return 1;
+
+    dec.kind = MM_OP_MRS;
+    dec.rd = 1u;
+    dec.imm = 0x93u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.r[1] != 1u) return 1;
+    dec.imm = 0x13u;
+    cpu.faultmask_s = 0u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.r[1] != 0u) return 1;
+    dec.imm = 0x12u;
+    if (exec_one(&cpu, &map, &scs, 0, &dec) != 0) return 1;
+    if (cpu.r[1] != 0x40u) return 1;
+    return 0;
+}
+
 static int test_unprivileged_t_forms_execute(void)
 {
     struct mm_cpu cpu;
@@ -1350,6 +1409,10 @@ int main(void)
     }
     if (test_msr_splim_masks_low_bits() != 0) {
         printf("FAIL: msr_splim_masks_low_bits\n");
+        return 1;
+    }
+    if (test_msr_mrs_mask_sysm_encodings() != 0) {
+        printf("FAIL: msr_mrs_mask_sysm_encodings\n");
         return 1;
     }
     if (test_unprivileged_t_forms_execute() != 0) {
